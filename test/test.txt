@@ -1,0 +1,8 @@
+>>> $test$ <<<
+>>> $legal$ <<<
+>>> $no_keyword: multi
+line
+test$ <<<
+>>> $test:6:o rly?,$ <<<
+>>> $test:7:o rly?,$ <<<
+>>> $test:700:o rly?,$ <<<
