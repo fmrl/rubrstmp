@@ -17,23 +17,23 @@ usage
 
 you can use rubber stamp to maintain [vim][vim] setting hints, amongst other things. for example, the following text in a source file:
 
-`# $vimopts$`
+`# $vimode$`
 
 can be transformed into the following:
 
-`# $vimopts:45:ex: set softtabstop=8 shiftwidth=8 expandtab:,$`
+`# $vimode:46: vi: set softtabstop=8 shiftwidth=8 expandtab:,$`
 
 by invoking rubber stamp with the following arguments:
 
-`rubrstmp -f FILE vimopts='ex: set softtabstop=8 shiftwidth=8 expandtab:'`
+`rubrstmp -f FILE vimode=' ex: set softtabstop=8 shiftwidth=8 expandtab:'`
 
-successive substitutions will work in the same manner.
+successive substitutions will work in the same manner. for example,
 
-`rubrstmp -f FILE vimopts='ex: set softtabstop=3 shiftwidth=3 expandtab:'`
+`rubrstmp -f FILE vimode=' ex: set softtabstop=3 shiftwidth=3 expandtab:'`
 
-yields:
+on the resulting output yields:
 
-`# $vimopts:45:ex: set softtabstop=3 shiftwidth=3 expandtab:,$`
+`# $vimode:46: vi: set softtabstop=3 shiftwidth=3 expandtab:,$`
 
 multi-line substititution is supported as well. for example, a legal notice can be substituted into a source file in the same manner. 
 

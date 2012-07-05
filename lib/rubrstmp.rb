@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# $vimopts:45:ex: set softtabstop=3 shiftwidth=3 expandtab:,$
+# $vimode:46: vi: set softtabstop=3 shiftwidth=3 expandtab:,$
 
 # $legal:1570:
 # 
@@ -72,7 +72,7 @@ ARGV.each do |s|
          # to a string and dropping the EOL, if there is one.
          x = f.readlines
          if x.length == 1 then
-            keywords[$1] = f.readlines[0].chomp
+            keywords[$1] = x[0].chomp
          else
             keywords[$1] = x
          end
@@ -132,7 +132,7 @@ f = File.open(options[:input], "r") do |f|
                if input[m..(m + 1)] == ',$' then
                   output << xyzzy(prefix, keyword, value)
                   prefix = ''
-                  j = i + n + keyword.length + 2 + $3.length
+                  j = i + n + keyword.length + 5 + $3.length
                else
                   $stderr.puts("warning!")
                   prefix << c
