@@ -15,7 +15,7 @@ features
 usage
 -----
 
-you can use rubber stamp to maintain [vim][vim] setting hints, amongst other things. for example, the following text in a source file:
+you can use rubber stamp to maintain [vim][vim] modelines, amongst other things. for example, the following text in a source file:
 
 `# $vimode$`
 
