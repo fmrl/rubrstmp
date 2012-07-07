@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 # $vimode:46: vi: set softtabstop=3 shiftwidth=3 expandtab:,$
 
 # $legal:1570:
@@ -36,21 +34,13 @@
 # 
 # ,$
 
-CLI_MODULE_PATH = 'fmrl/rubrstmp/cli'
-
-begin
-   # [mlr] first, try using the user's $LOAD_PATH settings.
-   require CLI_MODULE_PATH
-rescue LoadError 
-   begin
-      # [mlr] try requiring rubygems.
-      require 'rubygems'
-      require CLI_MODULE_PATH
-   rescue LoadError
-      # [mlr] try a relative path to the lib directory.
-      $LOAD_PATH << (File.dirname(__FILE__) + '/../lib')
-      require CLI_MODULE_PATH
-   end
+module RubrStmp	
 end
 
-RubrStmp.cli ARGV
+class RubrStmp::UsageError < RuntimeError
+
+   def initialize(msg)
+      super msg
+   end
+
+end
