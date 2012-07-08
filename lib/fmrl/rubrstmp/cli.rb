@@ -90,80 +90,15 @@ module RubrStmp
          raise RubrStmp::UsageError,
             'please specify an input file.'
       end
+      success = false
       f = File.open(options[:input], "r") do |f|
-         input = f.readlines(nil)[0]
-         prefix = ''
-         j = 0
-         line_no = 1
-         for i in 0...input.length
-            # [mlr] if this character is a $, then it's possible that it's a keyword
-            # field.
-            if i >= j then
-               c = input[i]
-               if c == ?$ and
-                     input[i..-1] =~ /\A\$(\w+)(\$|:([0-9]+):)/ then
-                  keyword = $1
-                  is_short_form = ($2[0] == ?$)
-                  value = keywords[keyword]
-                  if value then
-                     if is_short_form then
-                        output << xyzzy(prefix, keyword, value)
-                        prefix = ''
-                        j = i + keyword.length + 2
-                     else
-                        n = Integer($3)
-                        m = (i + $~.end(3) + 2 + n) - 1
-                        if input[m..(m + 1)] == ',$' then
-                           output << xyzzy(prefix, keyword, value)
-                           prefix = ''
-                           j = i + n + keyword.length + 5 + $3.length
-                        else
-                           $stderr.puts("warning!")
-                           prefix << c
-                        end
-                     end
-                  else
-                     prefix << c
-                  end
-               elsif c == ?\n then
-                  output << prefix
-                  prefix = ''
-                  output << c
-                  line_no += 1
-               else
-                  prefix << c
-               end
-            end
-         end
+         p = RubrStmp::Parser.new(options)
+         output = p.parse(f.readlines(nil)[0], keywords)
+         success = (p.warnings == 0)
       end
 
       puts output
-   end
-
-   private
-
-   def self.encode_netstring(s)
-      "%d:%s," % [s.length, s]
-   end
-
-   def self.xyzzy(prefix, keyword, value)
-      if value.is_a?(String) then
-         "#{prefix}$#{keyword}:#{encode_netstring(value)}$"
-      elsif value.is_a?(Array) then
-         s = "\n#{prefix}\n"
-         value.each do |line|
-            s << "#{prefix}#{line}"
-         end
-         # [mlr] if the last character in the file is an EOL, then we'll
-         # need another prefix before we put the suffix on.
-         if value[-1].chomp == value[-1] then
-            s << "\n"
-         end
-         s << "#{prefix}\n#{prefix}"
-         "#{prefix}$#{keyword}:#{encode_netstring(s)}$"
-      else
-         raise "i encountered an unexpected type #{value.class}."
-      end
+      exit success
    end
 
 end
