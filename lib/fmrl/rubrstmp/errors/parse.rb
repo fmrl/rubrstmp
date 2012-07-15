@@ -1,4 +1,4 @@
-module RubrStmp	
+module RubrStmp
 end
 
 class RubrStmp::ParseError < RuntimeError
@@ -8,10 +8,7 @@ class RubrStmp::ParseError < RuntimeError
    def initialize(line, column)
       @line = line
       @column = column
-      super "i failed to (#{@line}, column #{@column})."
-      else
-         super "the parser reported an error: #{parser.failure_reason}."
-     end
+      super "i failed to parse the text at #{@line}, column #{@column}."
    end
 
 end
