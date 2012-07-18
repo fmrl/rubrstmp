@@ -35,8 +35,8 @@
 # ,$
 
 require 'optparse'
-require 'rubrstmp'
 require 'rubrstmp/errors/usage'
+require 'rubrstmp/parser'
 
 module RubrStmp
 
@@ -51,6 +51,10 @@ module RubrStmp
          opts.on("-v", "--[no-]verbose",
             "i will provide verbose feedback.") do |v|
                options[:verbose] = v
+            end
+         opts.on("-O", "--[no-]overwrite",
+            "i will replace the input file with my output.") do |v|
+               options[:overwrite] = v
             end
       end.parse! argv
 

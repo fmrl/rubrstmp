@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 
-# $vimode:46: vi: set softtabstop=3 shiftwidth=3 expandtab:,$
-
 # $legal:1570:
 #
 # Copyright (c) 2012, Michael Lowell Roberts.
@@ -36,21 +34,21 @@
 #
 # ,$
 
-CLI_MODULE_PATH = 'rubrstmp/cli'
+CLI_MODULE_PATH = 'rubrstmp'
 
 begin
    # [mlr] first, try using the user's $LOAD_PATH settings.
-   require CLI_MODULE_PATH
+   require 'rubrstmp'
 rescue LoadError
    begin
-      # [mlr] try requiring rubygems.
+      # [mlr] if that fails, we try requiring rubygems and bundler.
       require 'rubygems'
-      require CLI_MODULE_PATH
-   rescue LoadError
-      # [mlr] try a relative path to the lib directory.
-      $LOAD_PATH << (File.dirname(__FILE__) + '/../lib')
-      require CLI_MODULE_PATH
+      require 'bundler/setup'
+      require 'rubrstmp'
    end
 end
 
 RubrStmp.cli ARGV
+
+# $vimode:46: vi: set softtabstop=3 shiftwidth=3 expandtab:,$
+

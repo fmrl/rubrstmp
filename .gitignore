@@ -16,10 +16,13 @@ spec/reports
 test/tmp
 test/version_tmp
 tmp
-# [mlr] vim swap files.
+# [mlr] temporary & backup files
+*~
+~.bak
 *.swp
-# [mlr] eclipse project files.
+# [mlr] eclipse
 .buildpath
 .project
-# [mlr] bundler deployment directory.
+# [mlr] bundler
 vendor
+bin/rake
