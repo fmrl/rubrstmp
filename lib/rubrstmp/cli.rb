@@ -53,7 +53,8 @@ module RubrStmp
                options[:verbose] = v
             end
          opts.on("-O", "--[no-]overwrite",
-            "i will replace the input file with my output.") do |v|
+            "i will replace the input file with my output instead of "\
+            "writing it to stdout.") do |v|
                options[:overwrite] = v
             end
       end.parse! argv
@@ -95,14 +96,30 @@ module RubrStmp
             'please specify an input file.'
       end
       success = false
-      f = File.open(options[:input], "r") do |f|
+      # [mlr][todo] what does File#open return when a block is provided?
+      # how should i refactor the code to take advantage of it?
+      File.open(options[:input], "r") do |f|
          p = RubrStmp::Parser.new(options)
+         # [mlr][todo] at some point, it might be worthwhile to stream the
+         # output to a file.
          output = p.parse(f.readlines(nil)[0], keywords)
          success = (p.warnings == 0)
+         f.close
       end
 
-      puts output
-      exit success
+      if success then
+         if options.fetch(:overwrite, false) then
+            File.open(options[:input], 'w') do |f|
+               f.write(output)
+               f.close
+            end
+         else
+            puts output
+         end
+         exit true
+      else
+         exit false
+      end
    end
 
 end
