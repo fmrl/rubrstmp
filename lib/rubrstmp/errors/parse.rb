@@ -1,6 +1,3 @@
-module RubrStmp
-end
-
 class RubrStmp::ParseError < RuntimeError
 
    attr_reader :line, :column

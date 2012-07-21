@@ -34,21 +34,21 @@
 #
 # ,$
 
-CLI_MODULE_PATH = 'rubrstmp'
+CLI_REQUIREMENT = 'rubrstmp/cli'
 
 begin
    # [mlr] first, try using the user's $LOAD_PATH settings.
-   require 'rubrstmp'
+   require CLI_REQUIREMENT
 rescue LoadError
    begin
       # [mlr] if that fails, we try requiring rubygems and bundler.
       require 'rubygems'
       require 'bundler/setup'
-      require 'rubrstmp'
+      require CLI_REQUIREMENT
    end
 end
 
-RubrStmp.cli ARGV
+RubrStmp.cli(ARGV)
 
-# $vimode:46: vi: set softtabstop=3 shiftwidth=3 expandtab:,$
+# $vim:46: vi: set softtabstop=3 shiftwidth=3 expandtab:,$
 

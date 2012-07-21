@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+# $legal$
 require File.expand_path('../lib/rubrstmp/version', __FILE__)
 
 Gem::Specification.new do |gem|
@@ -16,4 +17,7 @@ Gem::Specification.new do |gem|
   gem.version       = RubrStmp::VERSION
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'minitest'
+  gem.add_dependency 'ptools'
 end
+
+# $vim-rb$

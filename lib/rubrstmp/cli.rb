@@ -35,14 +35,74 @@
 # ,$
 
 require 'optparse'
+require 'rubrstmp'
 require 'rubrstmp/errors/usage'
-require 'rubrstmp/parser'
 
 module RubrStmp
 
-   def self.cli argv
+   def self.cli(argv)
+      RubrStmp::Cli.new(argv)
+   end
+
+end
+
+class RubrStmp::Cli
+
+   def initialize(argv)
+
+      @warnings = 0
+
+      parse_opts!(argv)
+
+      keywords = {}
+      argv.each do |s|
+         if not s =~ /^([\w-]+)=(.*)$/ then
+            raise "i don't recognize the association \"#{s}\"."
+         elsif keywords.has_key?($1) then
+            raise "you cannot specify an association for \"#{$1}\" twice."
+         elsif $2.length > 1 and $2[0..0] == '@' then
+            filen = $2[1..-1]
+            say(:verbose) {"#{$1} => #{filen}"}
+            File.open(filen, "r") do |f|
+               # [mlr] if the file contains a single line, then we can do an
+               # inline substitution. we represent this by converting the array
+               # to a string and dropping the EOL, if there is one.
+               x = f.readlines
+               if x.length == 1 then
+                  keywords[$1] = x[0].chomp
+               else
+                  keywords[$1] = x
+               end
+            end
+         else
+            say(:verbose) {"#{$1} => #{$2.inspect}"}
+            keywords[$1] = $2
+         end
+      end
+
+      # [mlr][todo] what does File#open return when a block is provided?
+      # how should i refactor the code to take advantage of it?
+      emit(
+         File.open(@input_filen, "r") do |f|
+            p = RubrStmp::Parser.new(:verbose => (@verbosity == :verbose))
+            # [mlr][todo] at some point, it might be worthwhile to stream
+            # the output to a file.
+            s = p.parse(f.readlines(nil)[0], keywords)
+            @warnings += p.warnings
+            s
+         end)
+
+      finish
+
+   end
+
+   private
+
+   def parse_opts!(argv)
+
       options = {}
       OptionParser.new do |opts|
+         @name = opts.program_name
          opts.banner = "usage: #{opts.program_name} [options]"
          opts.on("-f FILE", String,
             "specifies the input file.") do |v|
@@ -59,67 +119,52 @@ module RubrStmp
             end
       end.parse! argv
 
-      keywords = {}
-      ARGV.each do |s|
-         if not s =~ /^([\w-]+)=(.*)$/ then
-            raise "i don't recognize the association \"#{s}\"."
-         elsif keywords.has_key?($1) then
-            raise "you cannot specify an association for \"#{$1}\" twice."
-         elsif $2.length > 1 and $2[0..0] == '@' then
-            filen = $2[1..-1]
-            if options[:verbose] then
-               $stderr.puts "#{$1} => #{filen}"
-            end
-            File.open(filen, "r") do |f|
-               # [mlr] if the file contains a single line, then we can do an
-               # inline substitution. we represent this by converting the array
-               # to a string and dropping the EOL, if there is one.
-               x = f.readlines
-               if x.length == 1 then
-                  keywords[$1] = x[0].chomp
-               else
-                  keywords[$1] = x
-               end
-            end
-         else
-            if options[:verbose] then
-               $stderr.puts "#{$1} => #{$2.inspect}"
-            end
-            keywords[$1] = $2
-         end
+      if options.fetch(:verbose, false) then
+         @verbosity = :verbose
+      else
+         @verbosity = :normal
       end
 
-      text = nil
-      output = ''
-      if nil == options[:input] then
+      @input_filen = options[:input]
+      if @input_filen.nil? then
          raise RubrStmp::UsageError,
             'please specify an input file.'
       end
-      success = false
-      # [mlr][todo] what does File#open return when a block is provided?
-      # how should i refactor the code to take advantage of it?
-      File.open(options[:input], "r") do |f|
-         p = RubrStmp::Parser.new(options)
-         # [mlr][todo] at some point, it might be worthwhile to stream the
-         # output to a file.
-         output = p.parse(f.readlines(nil)[0], keywords)
-         success = (p.warnings == 0)
-         f.close
-      end
 
-      if success then
-         if options.fetch(:overwrite, false) then
-            File.open(options[:input], 'w') do |f|
-               f.write(output)
-               f.close
-            end
-         else
-            puts output
+      @overwrite = options.fetch(:overwrite, false)
+
+      argv
+   end
+
+   def say(channel = :normal)
+      case channel
+      when :normal
+         if @verbosity != :quiet then
+            $stderr.puts "#{@name}: #{yield}"
          end
-         exit true
-      else
-         exit false
+      when :verbose
+         if @verbosity == :verbose then
+            $stderr.puts "#{@name}: #{yield}"
+         end
+      when :error
+         $stderr.puts "#{@name}: #{yield}"
       end
    end
 
+   def emit(s)
+      if @overwrite then
+         File.open(@input_filen, 'w') do |f|
+            f.write(s)
+         end
+      else
+         puts s
+      end
+   end
+
+   def finish(options = {})
+      say {"i have finished with #{@warnings} warnings."}
+      exit @warnings == 0
+   end
+
 end
+

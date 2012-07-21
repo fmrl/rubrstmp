@@ -1,1 +1,1 @@
-require 'rubrstmp/cli'
+require 'rubrstmp/parser'

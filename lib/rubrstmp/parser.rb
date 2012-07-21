@@ -41,7 +41,7 @@ class RubrStmp::Parser
 
    attr_reader :warnings
 
-   def initialize(options)
+   def initialize(options = {})
       @verbose = options.fetch(:verbose, false)
    end
 
