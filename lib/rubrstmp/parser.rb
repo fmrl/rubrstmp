@@ -34,6 +34,8 @@
 #
 # ,$
 
+require 'case'
+
 module RubrStmp
 end
 
@@ -46,7 +48,7 @@ class RubrStmp::Parser
    end
 
    def parse(input, keywords)
-      reset
+      reset(keywords)
       for i in 0...input.length
          # [mlr] if this character is a $, then it's possible that it's a
          # keyword field.
@@ -56,7 +58,7 @@ class RubrStmp::Parser
                   input[i..-1] =~ /\A\$([\w-]+)(\$|:([0-9]+):)/ then
                keyword = $1
                is_short_form = ($2[0] == ?$)
-               value = keywords[keyword]
+               value = resolve(keyword)
                if value then
                   if is_short_form then
                      emit(keyword, value)
@@ -86,13 +88,15 @@ class RubrStmp::Parser
 
    private
 
-   def reset
+   def reset(keywords)
       @output = ''
       @prefix = ''
       @index = 0
       @line = 1
       @column = 1
       @warnings = 0
+      @keywords = keywords
+      @cache = {}
    end
 
    def echo(char)
@@ -145,6 +149,40 @@ class RubrStmp::Parser
    def warn(reason)
       $stderr.puts "warning at line #{@line}, column #{@column}: #{reason}"
       @warnings += 1
+   end
+
+   def load(keyword, filen)
+      File.open(filen, "r") do |f|
+         # [mlr] if the file contains a single line, then we can do an
+         # inline substitution. we represent this by converting the array
+         # to a string and dropping the EOL, if there is one.
+         s = f.readlines
+         if s.length == 1 then
+            {keyword => s[0].chomp}
+         else
+            {keyword => s}
+         end
+      end
+   end
+
+   def resolve(keyword)
+      cached = @cache[keyword]
+      if cached then
+         cached
+      else
+         tuple = @keywords[keyword]
+         case tuple
+         when Case[String]
+            s = tuple[0]
+         when Case[:path_name, String]
+            s = load(keyword, tuple[1])[keyword]
+         else
+            raise ArgumentError,
+               "i don't recognize the following association: "\
+                  "#{keyword.inspect} => #{tuple.inspect}."
+         end
+         @cache[keyword] = s
+      end
    end
 
 end

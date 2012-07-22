@@ -17,6 +17,7 @@ Gem::Specification.new do |gem|
   gem.version       = RubrStmp::VERSION
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'minitest'
+  gem.add_dependency 'case'
   gem.add_dependency 'ptools'
 end
 
