@@ -35,6 +35,8 @@
 # ,$
 
 require 'case'
+require 'ptools'
+require 'rubrstmp/feedback'
 
 module RubrStmp
 end
@@ -43,8 +45,12 @@ class RubrStmp::Parser
 
    attr_reader :warnings
 
-   def initialize(options = {})
-      @verbose = options.fetch(:verbose, false)
+   def initialize(feedback = nil)
+      if feedback.nil? then
+         @feedback = Feedback.new(:name => 'rubrstmp')
+      else
+         @feedback = feedback
+      end
    end
 
    def parse(input, keywords)
@@ -70,7 +76,9 @@ class RubrStmp::Parser
                         emit(keyword, value)
                         @index = i + n + keyword.length + 5 + $3.length
                      else
-                        warn("corrupt field detected.")
+                        warn(
+                           "corrupt field detected; edit manually to "\
+                              "correct.")
                         echo(c)
                      end
                   end
@@ -147,20 +155,27 @@ class RubrStmp::Parser
    end
 
    def warn(reason)
-      $stderr.puts "warning at line #{@line}, column #{@column}: #{reason}"
+      @feedback.say(:error) do
+         "(line #{@line}, column #{@column}) #{reason}"
+      end
       @warnings += 1
    end
 
    def load(keyword, filen)
-      File.open(filen, "r") do |f|
-         # [mlr] if the file contains a single line, then we can do an
-         # inline substitution. we represent this by converting the array
-         # to a string and dropping the EOL, if there is one.
-         s = f.readlines
-         if s.length == 1 then
-            {keyword => s[0].chomp}
-         else
-            {keyword => s}
+      if File.binary?(filen) then
+         raise ArgumentError,
+            "i don't support binary files (#{filen})."
+      else
+         File.open(filen, "r") do |f|
+            # [mlr] if the file contains a single line, then we can do an
+            # inline substitution. we represent this by converting the array
+            # to a string and dropping the EOL, if there is one.
+            s = f.readlines
+            if s.length == 1 then
+               {keyword => s[0].chomp}
+            else
+               {keyword => s}
+            end
          end
       end
    end

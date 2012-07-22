@@ -34,6 +34,9 @@
 #
 # ,$
 
+module RubrStmp
+end
+
 class RubrStmp::UsageError < RuntimeError
 
    def initialize(msg)

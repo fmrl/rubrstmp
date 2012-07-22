@@ -35,7 +35,8 @@
 # ,$
 
 require 'optparse'
-require 'rubrstmp'
+
+require 'rubrstmp/parser'
 require 'rubrstmp/errors/usage'
 
 module RubrStmp
@@ -56,7 +57,7 @@ class RubrStmp::Cli
 
       # [mlr][todo] what does File#open return when a block is provided?
       # how should i refactor the code to take advantage of it?
-      p = RubrStmp::Parser.new(:verbose => (@verbosity == :verbose))
+      p = RubrStmp::Parser.new(@feedback)
       emit(
          File.open(@input_filen, "r") do |f|
             # [mlr][todo] at some point, it might be worthwhile to stream
@@ -92,11 +93,15 @@ class RubrStmp::Cli
             end
       end.parse! argv
 
-      if options.fetch(:verbose, false) then
-         @verbosity = :verbose
-      else
-         @verbosity = :normal
-      end
+      @feedback =
+         RubrStmp::Feedback.new(
+            :name => @name,
+            :verbosity =>
+               (if options.fetch(:verbose, false) then
+                  :verbose
+               else
+                  :normal
+               end))
 
       @input_filen = options[:input]
       if @input_filen.nil? then
