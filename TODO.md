@@ -1,8 +1,18 @@
 todo list
 =========
 
-- refactor code for maintainability.
-- add comments to code.
-- document code with rdoc.
-- Rakefile integration.
+first public release (0.1.0)
+----------------------------
+
+- clean up output.
+- overview.rdoc w/ipsum lorem.
+- simple unit test.
+- warning about use with tab/space conversion and whitespace trimming.
 - finish gem integration.
+
+backlog
+-------
+
+- travis ci integration.
+- api documentation.
+- publish to rubygems.org.
