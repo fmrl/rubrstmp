@@ -111,10 +111,10 @@ class RubrStmp::Cli
             raise "you cannot specify an association for \"#{$1}\" twice."
          elsif $2.length > 1 and $2[0..0] == '@' then
             pathn = $2[1..-1]
-            say(:verbose) {"#{$1} => #{pathn}"}
+            @feedback.say(:verbose) {"#{$1} => [:path_name, #{pathn}]"}
             @keywords[$1] = [:path_name, pathn]
          else
-            say(:verbose) {"#{$1} => #{$2.inspect}"}
+            @feedback.say(:verbose) {"#{$1} => #{$2.inspect}"}
             @keywords[$1] = $2
          end
       end
@@ -122,23 +122,8 @@ class RubrStmp::Cli
       nil
    end
 
-   def say(channel = :normal)
-      case channel
-      when :normal
-         if @verbosity != :quiet then
-            $stderr.puts "#{@name}: #{yield}"
-         end
-      when :verbose
-         if @verbosity == :verbose then
-            $stderr.puts "#{@name}: #{yield}"
-         end
-      when :error
-         $stderr.puts "#{@name}: #{yield}"
-      end
-   end
-
    def finish(options = {})
-      say {"i have finished with #{@warnings} warnings."}
+      @feedback.say {"i have finished with #{@warnings} warnings."}
       exit @warnings == 0
    end
 

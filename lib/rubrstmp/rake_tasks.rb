@@ -82,13 +82,12 @@ namespace :rubrstmp do
          if not File.directory?(fn) then
             if File.binary?(fn) then
                fb.say(:verbose) do
-                  "skipped #{fn} (binary)."
+                  "#{fn} skipped (binary)."
                end
             else
-               fb.say(:verbose) {fn}
-               warnings = 0
+               result = nil
                begin
-                  warnings =
+                  result =
                      RubrStmp.update(fn, keywords,
                         :overwrite => true,
                         :feedback => fb)
@@ -98,9 +97,13 @@ namespace :rubrstmp do
                         "\"#{e.message}\""
                   end
                end
-               if warnings != 0 then
+               if result == :unchanged then
+                  fb.say {"#{fn} unchanged."}
+               elsif result == 0 then
+                  fb.say {"#{fn} updated."}
+               else
                   fb.say(:error) do
-                     "#{fn} abandoned due to #{warnings} warning(s)."
+                     "#{fn} abandoned due to #{result} warning(s)."
                   end
                end
             end

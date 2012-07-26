@@ -4,7 +4,6 @@ todo list
 first public release (0.1.0)
 ----------------------------
 
-- clean up output.
 - overview.rdoc w/ipsum lorem.
 - simple unit test.
 - warning about use with tab/space conversion and whitespace trimming.

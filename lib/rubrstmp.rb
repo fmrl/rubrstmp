@@ -52,17 +52,17 @@ module RubrStmp
 
       if p.warnings == 0 then
          if s.nil? then
-            fb.say(:normal) {"no changes."}
+            :unchanged
          elsif options.fetch(:overwrite, false) then
             File.open(filen, 'w') do |f|
                f.write(s)
             end
+            p.warnings
          else
             puts s
+            p.warnings
          end
       end
-
-      p.warnings
    end
 
 end
