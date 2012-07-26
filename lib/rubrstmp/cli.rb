@@ -1,25 +1,23 @@
-# $vimode:46: vi: set softtabstop=3 shiftwidth=3 expandtab:,$
-
 # $legal:1570:
-#
+# 
 # Copyright (c) 2012, Michael Lowell Roberts.
 # All rights reserved.
-#
+# 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-#
+# 
 #   - Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-#
+# 
 #   - Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-#
+# 
 #   - Neither the name of the copyright holder nor the names of
 #   contributors may be used to endorse or promote products derived
 #   from this software without specific prior written permission.
-#
+# 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -31,12 +29,12 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# 
 # ,$
 
 require 'optparse'
 
-require 'rubrstmp/parser'
+require 'rubrstmp'
 require 'rubrstmp/errors/usage'
 
 module RubrStmp
@@ -50,24 +48,18 @@ end
 class RubrStmp::Cli
 
    def initialize(argv)
-
       @warnings = 0
 
       parse_opts!(argv)
 
-      # [mlr][todo] what does File#open return when a block is provided?
-      # how should i refactor the code to take advantage of it?
-      p = RubrStmp::Parser.new(@feedback)
-      emit(
-         File.open(@input_filen, "r") do |f|
-            # [mlr][todo] at some point, it might be worthwhile to stream
-            # the output to a file.
-            p.parse(f.readlines(nil)[0], @keywords)
-         end)
+      @warnings +=
+         RubrStmp.update(
+            @input_filen,
+            @keywords,
+            :feedback => @feedback,
+            :overwrite => @overwrite)
 
-      @warnings += p.warnings
       finish
-
    end
 
    private
@@ -145,16 +137,6 @@ class RubrStmp::Cli
       end
    end
 
-   def emit(s)
-      if @overwrite then
-         File.open(@input_filen, 'w') do |f|
-            f.write(s)
-         end
-      else
-         puts s
-      end
-   end
-
    def finish(options = {})
       say {"i have finished with #{@warnings} warnings."}
       exit @warnings == 0
@@ -162,3 +144,4 @@ class RubrStmp::Cli
 
 end
 
+# $vim:23: vim:set sts=3 sw=3 et:,$
