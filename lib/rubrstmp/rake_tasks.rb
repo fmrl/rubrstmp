@@ -43,6 +43,31 @@ namespace :rubrstmp do
 
    desc "update keyword fields in text files."
    task :update do
+      update(KEYWORDS)
+   end
+
+   desc "erase keyword fields in text files."
+   task :clean do
+      keywords = 
+         KEYWORDS.keys.reduce({}) do |accum, keyword|
+            accum[keyword] = ''
+            accum
+         end
+      update(keywords)
+   end
+
+   private
+
+   # [mlr][todo] this should be implemented as an extension to File.
+   def exclude_globs(files, globs)
+      files.select do |fn|
+         not globs.reduce(false) do |matched, pattern|
+            matched or File.fnmatch?(pattern, fn)
+         end
+      end
+   end
+   
+   def update(keywords)
       fb = RubrStmp::Feedback.new(
          :name => 'rubrstmp',
          :output => $stdout,
@@ -64,7 +89,7 @@ namespace :rubrstmp do
                warnings = 0
                begin
                   warnings =
-                     RubrStmp.update(fn, KEYWORDS,
+                     RubrStmp.update(fn, keywords,
                         :overwrite => true,
                         :feedback => fb)
                rescue Exception => e
@@ -83,23 +108,6 @@ namespace :rubrstmp do
       end
    end
 
-#   desc "erase keyword fields in text files."
-#   task :clean
-#      CLEAN.reduce({}) do |accum, keyword|
-#         accum[keyword] = ''
-#      end
-#   end
-
-   private
-
-   # [mlr][todo] this should be implemented as an extension to File.
-   def exclude_globs(files, globs)
-      files.select do |fn|
-         not globs.reduce(false) do |matched, pattern|
-            matched or File.fnmatch?(pattern, fn)
-         end
-      end
-   end
 end
 
 # $vim:23: vim:set sts=3 sw=3 et:,$

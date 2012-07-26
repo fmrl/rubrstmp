@@ -115,7 +115,7 @@ class RubrStmp::Cli
             @keywords[$1] = [:path_name, pathn]
          else
             say(:verbose) {"#{$1} => #{$2.inspect}"}
-            @keywords[$1] = [$2]
+            @keywords[$1] = $2
          end
       end
 

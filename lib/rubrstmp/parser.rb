@@ -183,18 +183,20 @@ class RubrStmp::Parser
       if cached then
          cached
       else
-         tuple = @keywords[keyword]
-         case tuple
+         value = @keywords[keyword]
+         case value
          when nil
             s = nil
-         when Case[String]
-            s = tuple[0]
          when Case[:path_name, String]
-            s = load(keyword, tuple[1])[keyword]
+            s = load(keyword, value[1])[keyword]
          else
-            raise ArgumentError,
-               "i don't recognize the following association specification: "\
-                  "#{keyword.inspect} => #{tuple.inspect}."
+            if value.class == String then
+               s = value
+            else               
+               raise ArgumentError,
+                  "i don't recognize the following association specification: "\
+                     "#{keyword.inspect} => #{tuple.inspect}."
+            end
          end
          @cache[keyword] = s
       end
