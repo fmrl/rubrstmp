@@ -77,7 +77,7 @@ namespace :rubrstmp do
    
    def exclude(globs)
       globs.each do |s|
-         if v.class == String then
+         if s.class == String then
             EXCLUDE << s
          else
             raise ArgumentError,
