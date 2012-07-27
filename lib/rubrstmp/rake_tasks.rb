@@ -36,10 +36,7 @@ require 'ptools'
 require 'rubrstmp'
 
 namespace :rubrstmp do
-   RUBRSTMP = ENV['RUBRSTMP'] || 'bin/rubrstmp'
-   EXCLUDE = ['.git/**', '*.md', 'etc/rubrstmp/*', 'Gemfile.lock']
-   CLEAN = []
-   KEYWORDS = {}
+   
 
    desc "update keyword fields in text files."
    task :update do
@@ -55,12 +52,49 @@ namespace :rubrstmp do
          end
       update(keywords)
    end
-
+   
+   def string_keywords(tab)
+      tab.each do |k, v|
+         if v.class == String then
+            KEYWORDS[k] = v
+         else
+            raise ArgumentError,
+               "i expected a string but encountered a #{v.class}."
+         end
+      end
+   end
+   
+   def file_keywords(tab)
+      tab.each do |k, v|
+         if v.class == String then
+            KEYWORDS[k] = [:path_name, v]
+         else
+            raise ArgumentError,
+               "i expected a string but encountered a #{v.class}."
+         end
+      end
+   end
+   
+   def exclude(globs)
+      globs.each do |s|
+         if v.class == String then
+            EXCLUDE << s
+         else
+            raise ArgumentError,
+               "i expected a string but encountered a #{v.class}."
+         end
+      end
+   end
+   
    private
+   
+   RUBRSTMP = ENV['RUBRSTMP'] || 'bin/rubrstmp'
+   EXCLUDE = ['.git/**', '*.md', 'etc/rubrstmp/*', 'Gemfile.lock']
+   KEYWORDS = {}
 
    # [mlr][todo] this should be implemented as an extension to File.
-   def exclude_globs(files, globs)
-      files.select do |fn|
+   def exclude_globs(filens, globs)
+      filens.select do |fn|
          not globs.reduce(false) do |matched, pattern|
             matched or File.fnmatch?(pattern, fn)
          end
@@ -77,8 +111,8 @@ namespace :rubrstmp do
             else
                :normal
             end)
-      files = exclude_globs(Dir.glob('**/*'), EXCLUDE)
-      files.each do |fn|
+      filens = exclude_globs(Dir.glob('**/*'), EXCLUDE)
+      filens.each do |fn|
          if not File.directory?(fn) then
             if File.binary?(fn) then
                fb.say(:verbose) do

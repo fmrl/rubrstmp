@@ -44,10 +44,10 @@ Rake::TestTask.new do |t|
 end
 
 namespace :rubrstmp do
-   KEYWORDS.update(
-      {'vim' => [:path_name, 'etc/rubrstmp/vim/default'],
-      'vim-rb' => [:path_name, 'etc/rubrstmp/vim/ruby'],
-      'legal' => [:path_name, 'LICENSE.md']})
+   file_keywords \
+      'vim' => 'etc/rubrstmp/vim/default',
+      'vim-rb' => 'etc/rubrstmp/vim/ruby',
+      'legal' => 'LICENSE.md'
 end
 
 # $vim-rb:31: vim:set sts=3 sw=3 et ft=ruby:,$
