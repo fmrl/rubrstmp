@@ -16,3 +16,4 @@ backlog
 - travis ci integration.
 - api documentation.
 - publish to rubygems.org.
+- directories can be used as a namespace (i.e. vim.ruby => vim/ruby).
