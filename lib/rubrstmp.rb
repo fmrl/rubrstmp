@@ -57,12 +57,14 @@ module RubrStmp
             File.open(filen, 'w') do |f|
                f.write(s)
             end
-            p.warnings
+            0
          else
             puts s
-            p.warnings
+            0
          end
       end
+   else
+      p.warnings
    end
 
 end
