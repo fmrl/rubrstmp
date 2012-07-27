@@ -8,6 +8,7 @@ first public release (0.1.0)
 - simple unit test.
 - warning about use with tab/space conversion and whitespace trimming.
 - finish gem integration.
+- git-flow integration.
 
 backlog
 -------
