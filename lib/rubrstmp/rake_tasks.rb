@@ -41,6 +41,7 @@ namespace :rubrstmp do
    desc "update keyword fields in text files."
    task :update do
       update(KEYWORDS)
+      perform_recursion("update")
    end
 
    desc "erase keyword fields in text files."
@@ -51,6 +52,7 @@ namespace :rubrstmp do
             accum
          end
       update(keywords)
+      perform_recursion("clean")
    end
    
    def string_keywords(tab)
@@ -75,13 +77,31 @@ namespace :rubrstmp do
       end
    end
    
-   def exclude(globs)
+   def exclude(*globs)
       globs.each do |s|
-         if s.class == String then
-            EXCLUDE << s
-         else
+         if !s.is_a?(String) then
             raise ArgumentError,
                "i expected a string but encountered a #{v.class}."
+         else
+            EXCLUDE << s
+         end
+      end
+   end
+   
+   def recurse(*dirs)
+      dirs.each do |s|
+         if !s.is_a?(String) then
+            raise ArgumentError,
+               "i expected a string but encountered a #{v.class}."
+         elsif  !File.directory?(s) then
+            raise ArgumentError,
+               "i expected \"#{s}\" to describe a directory."
+         elsif  !File.exists?(File.expand_path("Rakefile", s)) then
+            raise ArgumentError,
+               "i expected \"#{s}\" to contain a Rakefile."
+         else
+            RECURSE << s
+            EXCLUDE << File.expand_path("../**/*", s)
          end
       end
    end
@@ -89,12 +109,25 @@ namespace :rubrstmp do
    private
    
    RUBRSTMP = ENV['RUBRSTMP'] || 'bin/rubrstmp'
-   EXCLUDE = ['.git/**', '*.md', 'etc/rubrstmp/*', 'Gemfile.lock']
+   EXCLUDE = ['.git/**', 'etc/rubrstmp/*', 'Gemfile.lock', '*~', '*.bak']
+   RECURSE = []
    KEYWORDS = {}
+   FEEDBACK = RubrStmp::Feedback.new(
+      :name => 'rubrstmp',
+      :output => $stdout,
+      :verbosity =>
+         if RakeFileUtils.verbose then
+            :verbose
+         else
+            :normal
+         end)
 
    # [mlr][todo] this should be implemented as an extension to File.
    def exclude_globs(filens, globs)
       filens.select do |fn|
+         # [mlr] some patterns won't be matched correctly without an
+         # absolute pathname.
+         fn = File.expand_path(fn)
          not globs.reduce(false) do |matched, pattern|
             matched or File.fnmatch?(pattern, fn)
          end
@@ -102,20 +135,11 @@ namespace :rubrstmp do
    end
    
    def update(keywords)
-      fb = RubrStmp::Feedback.new(
-         :name => 'rubrstmp',
-         :output => $stdout,
-         :verbosity =>
-            if RakeFileUtils.verbose then
-               :verbose
-            else
-               :normal
-            end)
       filens = exclude_globs(Dir.glob('**/*'), EXCLUDE)
       filens.each do |fn|
          if not File.directory?(fn) then
             if File.binary?(fn) then
-               fb.say(:verbose) do
+               FEEDBACK.say(:verbose) do
                   "#{fn} skipped (binary)."
                end
             else
@@ -124,23 +148,41 @@ namespace :rubrstmp do
                   result =
                      RubrStmp.update(fn, keywords,
                         :overwrite => true,
-                        :feedback => fb)
+                        :feedback => FEEDBACK)
                rescue Exception => e
-                  fb.say(:error) do
-                     "#{fn} abandoned due to exception: "
+                  FEEDBACK.say(:error) do
+                     "#{fn} abandoned due to exception: "\
                         "\"#{e.message}\""
                   end
-               end
-               if result == :unchanged then
-                  fb.say {"#{fn} unchanged."}
-               elsif result == 0 then
-                  fb.say {"#{fn} updated."}
                else
-                  fb.say(:error) do
-                     "#{fn} abandoned due to #{result} warning(s)."
+                  if result == :unchanged then
+                     nil
+                     #FEEDBACK.say(:verbose) {"#{fn} unchanged."}
+                  elsif result == 0 then
+                     FEEDBACK.say {"#{fn} updated."}
+                  else
+                     FEEDBACK.say(:error) do
+                        "#{fn} abandoned due to #{result} warning(s)."
+                     end
                   end
                end
             end
+         end
+      end      
+   end
+   
+   def perform_recursion(task_name)
+      RECURSE.each do |dirn|
+         success = false
+         if File.exists?(File.expand_path("Gemfile", dirn)) then
+            success = 
+               sh "cd #{dirn} && bundle exec rake rubrstmp:#{task_name}"
+         else
+            success = sh "cd #{dirn} && rake rubrstmp:#{task_name}"
+         end
+         if !success then
+            raise RuntimeError,
+               "recursion into #{dirn} failed; returned error code #{$?}."
          end
       end
    end

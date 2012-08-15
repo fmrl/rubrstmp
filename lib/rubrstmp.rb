@@ -62,9 +62,9 @@ module RubrStmp
             puts s
             0
          end
+      else
+         p.warnings
       end
-   else
-      p.warnings
    end
 
 end
