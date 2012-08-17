@@ -101,7 +101,7 @@ namespace :rubrstmp do
                "i expected \"#{s}\" to contain a Rakefile."
          else
             RECURSE << s
-            EXCLUDE << File.expand_path("../**/*", s)
+            EXCLUDE << File.expand_path("**", s)
          end
       end
    end
@@ -123,22 +123,33 @@ namespace :rubrstmp do
          end)
 
    # [mlr][todo] this should be implemented as an extension to File.
-   def exclude_globs(filens, globs)
-      filens.select do |fn|
-         # [mlr] some patterns won't be matched correctly without an
-         # absolute pathname.
-         fn = File.expand_path(fn)
-         not globs.reduce(false) do |matched, pattern|
-            matched or File.fnmatch?(pattern, fn)
+   def excluded?(fn, globs)
+      # [mlr] some patterns won't be matched correctly without an
+      # absolute pathname.
+      fn = File.expand_path(fn)
+      globs.reduce(nil) do |matched, glob|
+         if matched.nil? then
+            if File.fnmatch?(File.expand_path(glob), fn) then
+               #puts "+++ File.fnmatch?(#{File.expand_path(glob)}, #{fn}) => true"
+               glob
+            else
+               #puts "+++ File.fnmatch?(#{File.expand_path(glob)}, #{fn}) => false"
+               nil
+            end
+         else
+            matched
          end
       end
    end
    
    def update(keywords)
-      filens = exclude_globs(Dir.glob('**/*'), EXCLUDE)
-      filens.each do |fn|
+      Dir.glob('**/*').sort.each do |fn|
          if not File.directory?(fn) then
-            if File.binary?(fn) then
+            glob = excluded?(fn, EXCLUDE)
+            if glob then
+               #FEEDBACK.say(:verbose) { "#{fn} excluded (#{glob})."}
+               nil
+            elsif File.binary?(fn) then
                FEEDBACK.say(:verbose) do
                   "#{fn} skipped (binary)."
                end
@@ -156,8 +167,8 @@ namespace :rubrstmp do
                   end
                else
                   if result == :unchanged then
-                     nil
                      #FEEDBACK.say(:verbose) {"#{fn} unchanged."}
+                     nil
                   elsif result == 0 then
                      FEEDBACK.say {"#{fn} updated."}
                   else
@@ -184,6 +195,7 @@ namespace :rubrstmp do
             raise RuntimeError,
                "recursion into #{dirn} failed; returned error code #{$?}."
          end
+         FEEDBACK.say {"#{dirn} #{task_name} complete."}
       end
    end
 
