@@ -46,21 +46,25 @@ module RubrStmp
          s0 = f.readlines(nil)[0]
          s = p.parse(s0, keywords)
          if s0 == s then
-            s = nil
+            s = :unchanged
          end
       end
 
       if p.warnings == 0 then
-         if s.nil? then
+         if s == :unchanged then
             :unchanged
-         elsif options.fetch(:overwrite, false) then
-            File.open(filen, 'w') do |f|
-               f.write(s)
-            end
+         elsif options.fetch(:dry_run, true)
             0
          else
-            puts s
-            0
+            if options.fetch(:overwrite, false) then
+               File.open(filen, 'w') do |f|
+                  f.write(s)
+               end
+               0
+            else
+               puts s
+               0
+            end
          end
       else
          p.warnings

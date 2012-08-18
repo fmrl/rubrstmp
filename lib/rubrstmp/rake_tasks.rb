@@ -36,23 +36,29 @@ require 'ptools'
 require 'rubrstmp'
 
 namespace :rubrstmp do
-   
 
-   desc "update keyword fields in text files."
+   desc "update keyword fields in text files (dry run)."
    task :update do
       update(KEYWORDS)
-      perform_recursion("update")
+      recursions("update")
+   end
+   
+   desc "update keyword fields in text files."
+   task :update! do
+      update(KEYWORDS, :dry_run => false)
+      recursions("update!", :dry_run => false)
+   end
+   
+   desc "erase keyword fields in text files (dry run)."
+   task :clean do
+      clean()
+      recursions("clean")
    end
 
    desc "erase keyword fields in text files."
-   task :clean do
-      keywords = 
-         KEYWORDS.keys.reduce({}) do |accum, keyword|
-            accum[keyword] = ''
-            accum
-         end
-      update(keywords)
-      perform_recursion("clean")
+   task :clean! do
+      clean(:dry_run => false)
+      recursions("clean!", :dry_run => false)
    end
    
    def string_keywords(tab)
@@ -112,15 +118,27 @@ namespace :rubrstmp do
    EXCLUDE = ['.git/**', 'etc/rubrstmp/*', 'Gemfile.lock', '*~', '*.bak']
    RECURSE = []
    KEYWORDS = {}
-   FEEDBACK = RubrStmp::Feedback.new(
-      :name => 'rubrstmp',
-      :output => $stdout,
-      :verbosity =>
-         if RakeFileUtils.verbose then
-            :verbose
-         else
-            :normal
-         end)
+      
+   def new_feedback(options = {})
+      RubrStmp::Feedback.new(
+         :name => 'rubrstmp',
+         :output => $stdout,
+         :verbosity =>
+            if options.fetch(:dry_run, true) then
+               :verbose
+            else
+               :normal
+            end)
+   end
+            
+   def clean(options = {})
+      keywords = 
+         KEYWORDS.keys.reduce({}) do |accum, keyword|
+            accum[keyword] = ''
+            accum
+         end
+      update(keywords, options)
+   end
 
    # [mlr][todo] this should be implemented as an extension to File.
    def excluded?(fn, globs)
@@ -142,15 +160,20 @@ namespace :rubrstmp do
       end
    end
    
-   def update(keywords)
+   def update(keywords, options = {})
+      modified = 0
+      dry_run = options.fetch(:dry_run, true)
+      feedback = options.fetch(:feedback, new_feedback(:dry_run => dry_run))
+      # [mlr] the feedback object should be passed in with the verbosity 
+      # set according to whether :dry_run is specified.
       Dir.glob('**/*').sort.each do |fn|
          if not File.directory?(fn) then
             glob = excluded?(fn, EXCLUDE)
             if glob then
-               #FEEDBACK.say(:verbose) { "#{fn} excluded (#{glob})."}
+               feedback.say(:verbose) { "#{fn} excluded (#{glob})."}
                nil
             elsif File.binary?(fn) then
-               FEEDBACK.say(:verbose) do
+               feedback.say(:verbose) do
                   "#{fn} skipped (binary)."
                end
             else
@@ -159,30 +182,43 @@ namespace :rubrstmp do
                   result =
                      RubrStmp.update(fn, keywords,
                         :overwrite => true,
-                        :feedback => FEEDBACK)
+                        :feedback => feedback,
+                        :dry_run => dry_run)
                rescue Exception => e
-                  FEEDBACK.say(:error) do
+                  feedback.say(:error) do
                      "#{fn} abandoned due to exception: "\
                         "\"#{e.message}\""
                   end
                else
                   if result == :unchanged then
-                     #FEEDBACK.say(:verbose) {"#{fn} unchanged."}
+                     feedback.say(:verbose) {"#{fn} unchanged."}
                      nil
                   elsif result == 0 then
-                     FEEDBACK.say {"#{fn} updated."}
+                     if dry_run then
+                        feedback.say {"#{fn} would be updated."}
+                     else
+                        feedback.say {"#{fn} updated."}
+                     end
+                     modified += 1
                   else
-                     FEEDBACK.say(:error) do
+                     feedback.say(:error) do
                         "#{fn} abandoned due to #{result} warning(s)."
                      end
                   end
                end
             end
          end
-      end      
+      end
+      if dry_run then
+         feedback.say {"#{modified} file(s) would be modified."}         
+      else
+         feedback.say {"#{modified} file(s) modified."}
+      end
    end
    
-   def perform_recursion(task_name)
+   def recursions(task_name, options = {})
+      dry_run = options.fetch(:dry_run, true)
+      feedback = options.fetch(:feedback, new_feedback(:dry_run => dry_run))
       RECURSE.each do |dirn|
          success = false
          if File.exists?(File.expand_path("Gemfile", dirn)) then
@@ -195,7 +231,7 @@ namespace :rubrstmp do
             raise RuntimeError,
                "recursion into #{dirn} failed; returned error code #{$?}."
          end
-         FEEDBACK.say {"#{dirn} #{task_name} complete."}
+         feedback.say {"#{dirn} #{task_name} complete."}
       end
    end
 
