@@ -33,7 +33,7 @@
 # ,$
 
 module RubrStmp
-  VERSION = "0.0.1"
+  VERSION = "0.1.0"
 end
 
 # $vim:23: vim:set sts=3 sw=3 et:,$

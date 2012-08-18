@@ -1,19 +1,14 @@
 todo list
 =========
 
-first public release (0.1.0)
-----------------------------
-
-- overview.rdoc w/ipsum lorem.
-- simple unit test.
-- warning about use with tab/space conversion and whitespace trimming.
-- finish gem integration.
-- git-flow integration.
-
 backlog
 -------
 
-- travis ci integration.
 - api documentation.
-- publish to rubygems.org.
 - directories can be used as a namespace (i.e. vim.ruby => vim/ruby).
+- finish gem integration.
+- git-flow integration.
+- overview.rdoc w/ipsum lorem.
+- publish to rubygems.org.
+- simple unit test.
+- travis ci integration.
