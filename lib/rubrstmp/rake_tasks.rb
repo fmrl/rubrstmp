@@ -42,13 +42,13 @@ namespace :rubrstmp do
       update(KEYWORDS)
       recursions("smudge")
    end
-   
+
    desc "expand keyword fields in text files."
    task :smudge! do
       update(KEYWORDS, :dry_run => false)
       recursions("smudge!", :dry_run => false)
    end
-   
+
    desc "erase keyword fields in text files (dry run)."
    task :clean do
       clean()
@@ -60,7 +60,7 @@ namespace :rubrstmp do
       clean(:dry_run => false)
       recursions("clean!", :dry_run => false)
    end
-   
+
    def string_keywords(tab)
       tab.each do |k, v|
          if v.class == String then
@@ -71,7 +71,7 @@ namespace :rubrstmp do
          end
       end
    end
-   
+
    def file_keywords(tab)
       tab.each do |k, v|
          if v.class == String then
@@ -82,7 +82,7 @@ namespace :rubrstmp do
          end
       end
    end
-   
+
    def exclude(*globs)
       globs.each do |s|
          if !s.is_a?(String) then
@@ -93,7 +93,7 @@ namespace :rubrstmp do
          end
       end
    end
-   
+
    def recurse(*dirs)
       dirs.each do |s|
          if !s.is_a?(String) then
@@ -111,28 +111,23 @@ namespace :rubrstmp do
          end
       end
    end
-   
+
    private
-   
+
    RUBRSTMP = ENV['RUBRSTMP'] || 'bin/rubrstmp'
    EXCLUDE = ['.git/**', 'etc/rubrstmp/*', 'Gemfile.lock', '*~', '*.bak']
    RECURSE = []
    KEYWORDS = {}
-      
+
    def new_feedback(options = {})
       RubrStmp::Feedback.new(
          :name => 'rubrstmp',
          :output => $stdout,
-         :verbosity =>
-            if options.fetch(:dry_run, true) then
-               :verbose
-            else
-               :normal
-            end)
+         :verbosity => :normal)
    end
-            
+
    def clean(options = {})
-      keywords = 
+      keywords =
          KEYWORDS.keys.reduce({}) do |accum, keyword|
             accum[keyword] = ''
             accum
@@ -159,12 +154,12 @@ namespace :rubrstmp do
          end
       end
    end
-   
+
    def update(keywords, options = {})
       modified = 0
       dry_run = options.fetch(:dry_run, true)
       feedback = options.fetch(:feedback, new_feedback(:dry_run => dry_run))
-      # [mlr] the feedback object should be passed in with the verbosity 
+      # [mlr] the feedback object should be passed in with the verbosity
       # set according to whether :dry_run is specified.
       Dir.glob('**/*').sort.each do |fn|
          if not File.directory?(fn) then
@@ -187,18 +182,12 @@ namespace :rubrstmp do
                rescue Exception => e
                   feedback.say(:error) do
                      "#{fn} abandoned due to exception: "\
-                        "\"#{e.message}\""
+                        "\"#{e.message}\nbacktrace:\n\t#{e.backtrace.join("\n\t")}\""
                   end
                else
                   if result == :unchanged then
-                     feedback.say(:verbose) {"#{fn} unchanged."}
                      nil
                   elsif result == 0 then
-                     if dry_run then
-                        feedback.say {"#{fn} would be modified."}
-                     else
-                        feedback.say {"#{fn} modified."}
-                     end
                      modified += 1
                   else
                      feedback.say(:error) do
@@ -210,19 +199,19 @@ namespace :rubrstmp do
          end
       end
       if dry_run then
-         feedback.say {"#{modified} file(s) would be modified."}         
+         feedback.say {"#{modified} file(s) would be modified."}
       else
          feedback.say {"#{modified} file(s) modified."}
       end
    end
-   
+
    def recursions(task_name, options = {})
       dry_run = options.fetch(:dry_run, true)
       feedback = options.fetch(:feedback, new_feedback(:dry_run => dry_run))
       RECURSE.each do |dirn|
          success = false
          if File.exists?(File.expand_path("Gemfile", dirn)) then
-            success = 
+            success =
                sh "cd #{dirn} && bundle exec rake rubrstmp:#{task_name}"
          else
             success = sh "cd #{dirn} && rake rubrstmp:#{task_name}"

@@ -33,7 +33,63 @@
 # ,$
 
 module RubrStmp
-  VERSION = "0.1.1"
 end
 
-# $vim:23: vim:set sts=3 sw=3 et:,$
+class RubrStmp::IO
+
+   def initialize(options = {})
+      @options = options
+      @feedback = options.fetch(:feedback, RubrStmp::Feedback.new(:name => 'rubrstmp'))
+      @dry_run = options.fetch(:dry_run, true)
+      @overwrite = options.fetch(:overwrite, false)
+      @eol = options.fetch(:eol, :auto)
+   end
+
+   def read(filen)
+      s = IO.binread(filen)
+      return s.encode(s.encoding, :universal_newline => true)
+   end
+
+   def write(filen, s)
+      if @overwrite then
+         if @dry_run then
+            @feedback.say(:normal) { "`#{filen}` would be modified (eol is #{@eol.to_s})." }
+         else
+            @feedback.say(:verbose) { "modifying `#{filen}` (eol is #{@eol.to_s})." }
+            encode_options = make_encode_options(@eol)
+            output = s.encode(s.encoding, encode_options)
+            IO.binwrite(filen, output)
+         end
+      else
+         @feedback.say(:verbose) { "the result of the keyword expansion follows..." }
+         puts s
+      end
+   end
+
+   private
+
+   def default_eol
+      case RubrStmp::Platform.name
+      when :windows
+         :crlf
+      else
+         :lf
+      end
+   end
+
+   def make_encode_options(eol, options = {})
+      case eol
+      when :crlf
+         options[:crlf_newline] = true
+      when :cr
+         options[:cr_newline] = true
+      when :lf
+         options[:universal_newline] = true
+      when :auto
+         make_encode_options(default_eol, options)
+      else
+         raise "i don't recognize the eol encoding #{@eol.to_s}"
+      end
+      return options
+   end
+end

@@ -44,6 +44,11 @@ Rake::TestTask.new do |t|
 end
 
 namespace :rubrstmp do
+   exclude "LICENSE.md"
+   exclude "README.md"
+   exclude "vendor/*"
+   exclude "bin/*"
+   exclude "Gemfile.lock"
    file_keywords \
       'vim' => 'etc/rubrstmp/vim/default',
       'vim-rb' => 'etc/rubrstmp/vim/ruby',

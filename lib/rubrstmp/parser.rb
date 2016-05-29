@@ -34,7 +34,9 @@
 
 require 'case'
 require 'ptools'
+
 require 'rubrstmp/feedback'
+require 'rubrstmp/io'
 
 module RubrStmp
 end
@@ -43,12 +45,10 @@ class RubrStmp::Parser
 
    attr_reader :warnings
 
-   def initialize(feedback = nil)
-      if feedback.nil? then
-         @feedback = RubrStmp::Feedback.new(:name => 'rubrstmp')
-      else
-         @feedback = feedback
-      end
+   def initialize(io, options = {})
+      @options = options
+      @feedback = options.fetch(:feedback, RubrStmp::Feedback.new(:name => 'rubrstmp'))
+      @io = io
    end
 
    def parse(input, keywords)
@@ -58,11 +58,18 @@ class RubrStmp::Parser
          # keyword field.
          if i >= @index then
             c = input[i]
-            if c == ?$ and
-                  input[i..-1] =~ /\A\$([\w-]+)(\$|:([0-9]+):)/ then
+            if c == ?$ and input[i..-1] =~ /\A\$([\w-]+)(\$|:([0-9]+):)/ then
                keyword = $1
                is_short_form = ($2[0] == ?$)
-               value = resolve(keyword)
+               @feedback.say(:verbose) do
+                  msg = "keyword '#{keyword}' identified."
+                  if is_short_form then
+                     "#{coordinate_to_s} short form #{msg}"
+                  else
+                     "#{coordinate_to_s} #{msg}"
+                  end
+               end
+               value = expand(keyword)
                if value then
                   if is_short_form then
                      emit(keyword, value)
@@ -118,7 +125,7 @@ class RubrStmp::Parser
       end
    end
 
-   def encode_netstring(s)
+   def encode_header(s)
       "%d:%s," % [s.length, s]
    end
 
@@ -130,7 +137,7 @@ class RubrStmp::Parser
          @prefix = ''
          nil
       elsif value.is_a?(String) then
-         @output << "#{@prefix}$#{keyword}:#{encode_netstring(value)}$"
+         @output << "#{@prefix}$#{keyword}:#{encode_header(value)}$"
          @prefix = ''
          nil
       elsif value.is_a?(Array) then
@@ -144,7 +151,7 @@ class RubrStmp::Parser
             s << "\n"
          end
          s << "#{@prefix}\n#{@prefix}"
-         @output << "#{@prefix}$#{keyword}:#{encode_netstring(s)}$"
+         @output << "#{@prefix}$#{keyword}:#{encode_header(s)}$"
          @prefix = ''
          nil
       else
@@ -154,31 +161,34 @@ class RubrStmp::Parser
 
    def warn(reason)
       @feedback.say(:error) do
-         "(line #{@line}, column #{@column}) #{reason}"
+         "#{coordinate_to_s} #{reason}"
       end
       @warnings += 1
+   end
+
+   def coordinate_to_s
+      return "(at line #{@line}, column #{@column})"
    end
 
    def load(keyword, filen)
       if File.binary?(filen) then
          raise ArgumentError,
-            "i don't support binary files (#{filen})."
+            "i don't support binary files (`#{filen}`)."
       else
-         File.open(filen, "r") do |f|
-            # [mlr] if the file contains a single line, then we can do an
-            # inline substitution. we represent this by converting the array
-            # to a string and dropping the EOL, if there is one.
-            s = f.readlines
-            if s.length == 1 then
-               {keyword => s[0].chomp}
-            else
-               {keyword => s}
-            end
+         @feedback.say(:verbose) { "i am reading `#{filen}` so that i can expand uses of `$#{keyword}$`." }
+         s = @io.read(filen).lines
+         # [mlr] if the file contains a single line, then we can do an
+         # inline substitution. we represent this by converting the array
+         # to a string and dropping the EOL, if there is one.
+         if s.length == 1 then
+            {keyword => s[0].chomp}
+         else
+            {keyword => s}
          end
       end
    end
 
-   def resolve(keyword)
+   def expand(keyword)
       cached = @cache[keyword]
       if cached then
          cached
@@ -192,7 +202,7 @@ class RubrStmp::Parser
          else
             if value.class == String then
                s = value
-            else               
+            else
                raise ArgumentError,
                   "i don't recognize the following association specification: "\
                      "#{keyword.inspect} => #{tuple.inspect}."
