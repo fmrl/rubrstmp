@@ -1,23 +1,23 @@
-# $legal:1570:
-# 
+# $legal:1562:
+#
 # Copyright (c) 2012, Michael Lowell Roberts.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-# 
+#
 #   - Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 #   - Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-# 
+#
 #   - Neither the name of the copyright holder nor the names of
 #   contributors may be used to endorse or promote products derived
 #   from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -29,8 +29,8 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
-# ,$
+#
+#,$
 
 require 'case'
 require 'ptools'
@@ -141,16 +141,18 @@ class RubrStmp::Parser
          @prefix = ''
          nil
       elsif value.is_a?(Array) then
-         s = "\n#{@prefix}\n"
+         s = "\n#{@prefix.rstrip}\n"
          value.each do |line|
-            s << "#{@prefix}#{line}"
+            s << "#{@prefix}#{line}".rstrip
+            s << "\n"
          end
          # [mlr] if the last character in the file is an EOL, then we'll
          # need another prefix before we put the suffix on.
          if value[-1].chomp == value[-1] then
             s << "\n"
          end
-         s << "#{@prefix}\n#{@prefix}"
+         s << "#{@prefix}".rstrip
+         s << "\n#{@prefix}".rstrip
          @output << "#{@prefix}$#{keyword}:#{encode_header(s)}$"
          @prefix = ''
          nil
@@ -181,9 +183,9 @@ class RubrStmp::Parser
          # inline substitution. we represent this by converting the array
          # to a string and dropping the EOL, if there is one.
          if s.length == 1 then
-            {keyword => s[0].chomp}
+            return s[0].chomp
          else
-            {keyword => s}
+            return s.map { |s| "#{s.rstrip}\n" }
          end
       end
    end
@@ -198,7 +200,7 @@ class RubrStmp::Parser
          when nil
             s = nil
          when Case[:path_name, String]
-            s = load(keyword, value[1])[keyword]
+            s = load(keyword, value[1])
          else
             if value.class == String then
                s = value

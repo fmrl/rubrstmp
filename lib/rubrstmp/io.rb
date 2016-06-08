@@ -1,4 +1,4 @@
-# $legal:1570:
+# $legal:1562:
 #
 # Copyright (c) 2012, Michael Lowell Roberts.
 # All rights reserved.
@@ -30,7 +30,7 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# ,$
+#,$
 
 module RubrStmp
 end
