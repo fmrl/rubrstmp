@@ -38,15 +38,15 @@ require 'rubrstmp'
 namespace :rubrstmp do
 
    desc "expand keyword fields in text files (dry run)."
-   task :smudge do
+   task :update do
       update(KEYWORDS)
-      recursions("smudge")
+      recursions("update")
    end
 
    desc "expand keyword fields in text files."
-   task :smudge! do
+   task :update! do
       update(KEYWORDS, :dry_run => false)
-      recursions("smudge!", :dry_run => false)
+      recursions("update!", :dry_run => false)
    end
 
    desc "erase keyword fields in text files (dry run)."
